@@ -3,15 +3,25 @@ import { ConstraintStrategy } from 'find-my-way'
 import { FastifyContextConfig } from './context'
 import {
   onErrorHookHandler,
+  onErrorAsyncHookHandler,
   onRequestAbortHookHandler,
+  onRequestAbortAsyncHookHandler,
   onRequestHookHandler,
+  onRequestAsyncHookHandler,
   onResponseHookHandler,
+  onResponseAsyncHookHandler,
   onSendHookHandler,
+  onSendAsyncHookHandler,
   onTimeoutHookHandler,
+  onTimeoutAsyncHookHandler,
   preHandlerHookHandler,
+  preHandlerAsyncHookHandler,
   preParsingHookHandler,
+  preParsingAsyncHookHandler,
   preSerializationHookHandler,
-  preValidationHookHandler
+  preSerializationAsyncHookHandler,
+  preValidationHookHandler,
+  preValidationAsyncHookHandler
 } from './hooks'
 import { FastifyInstance } from './instance'
 import { FastifyBaseLogger, FastifyChildLoggerFactory, LogLevel } from './logger'
@@ -45,7 +55,17 @@ export interface RouteConstraint {
 /**
  * Route shorthand options for the various shorthand methods
  */
-type RouteShorthandHook<T extends (...args: any) => any> = (...args: Parameters<T>) => void | Promise<unknown>
+type RouteShorthandSyncHookReturn = void | { __sync?: never }
+
+type RouteShorthandHook<
+  T extends (...args: any) => any,
+  AsyncT extends (...args: any) => any = never
+> =
+  | ((...args: Parameters<T>) => RouteShorthandSyncHookReturn)
+  | ((...args: AsyncT extends (...args: any) => any
+    ? [...Parameters<AsyncT>]
+    : never
+  ) => Promise<unknown>)
 
 export interface RouteShorthandOptions<
   RawServer extends RawServerBase = RawServerDefault,
@@ -79,26 +99,86 @@ export interface RouteShorthandOptions<
   schemaErrorFormatter?: SchemaErrorFormatter;
 
   // hooks
-  onRequest?: RouteShorthandHook<onRequestHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>>
-  | RouteShorthandHook<onRequestHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>>[];
-  preParsing?: RouteShorthandHook<preParsingHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>>
-  | RouteShorthandHook<preParsingHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>>[];
-  preValidation?: RouteShorthandHook<preValidationHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>>
-  | RouteShorthandHook<preValidationHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>>[];
-  preHandler?: RouteShorthandHook<preHandlerHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>>
-  | RouteShorthandHook<preHandlerHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>>[];
-  preSerialization?: RouteShorthandHook<preSerializationHookHandler<unknown, RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>>
-  | RouteShorthandHook<preSerializationHookHandler<unknown, RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>>[];
-  onSend?: RouteShorthandHook<onSendHookHandler<unknown, RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>>
-  | RouteShorthandHook<onSendHookHandler<unknown, RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>>[];
-  onResponse?: RouteShorthandHook<onResponseHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>>
-  | RouteShorthandHook<onResponseHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>>[];
-  onTimeout?: RouteShorthandHook<onTimeoutHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>>
-  | RouteShorthandHook<onTimeoutHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>>[];
-  onError?: RouteShorthandHook<onErrorHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, FastifyError, NoInfer<SchemaCompiler>, TypeProvider, Logger>>
-  | RouteShorthandHook<onErrorHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, FastifyError, NoInfer<SchemaCompiler>, TypeProvider, Logger>>[];
-  onRequestAbort?: RouteShorthandHook<onRequestAbortHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>>
-  | RouteShorthandHook<onRequestAbortHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>>[];
+  onRequest?: RouteShorthandHook<
+    onRequestHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>,
+    onRequestAsyncHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>
+  >
+  | RouteShorthandHook<
+    onRequestHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>,
+    onRequestAsyncHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>
+  >[];
+  preParsing?: RouteShorthandHook<
+    preParsingHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>,
+    preParsingAsyncHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>
+  >
+  | RouteShorthandHook<
+    preParsingHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>,
+    preParsingAsyncHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>
+  >[];
+  preValidation?: RouteShorthandHook<
+    preValidationHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>,
+    preValidationAsyncHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>
+  >
+  | RouteShorthandHook<
+    preValidationHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>,
+    preValidationAsyncHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>
+  >[];
+  preHandler?: RouteShorthandHook<
+    preHandlerHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>,
+    preHandlerAsyncHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>
+  >
+  | RouteShorthandHook<
+    preHandlerHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>,
+    preHandlerAsyncHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>
+  >[];
+  preSerialization?: RouteShorthandHook<
+    preSerializationHookHandler<unknown, RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>,
+    preSerializationAsyncHookHandler<unknown, RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>
+  >
+  | RouteShorthandHook<
+    preSerializationHookHandler<unknown, RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>,
+    preSerializationAsyncHookHandler<unknown, RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>
+  >[];
+  onSend?: RouteShorthandHook<
+    onSendHookHandler<unknown, RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>,
+    onSendAsyncHookHandler<unknown, RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>
+  >
+  | RouteShorthandHook<
+    onSendHookHandler<unknown, RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>,
+    onSendAsyncHookHandler<unknown, RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>
+  >[];
+  onResponse?: RouteShorthandHook<
+    onResponseHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>,
+    onResponseAsyncHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>
+  >
+  | RouteShorthandHook<
+    onResponseHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>,
+    onResponseAsyncHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>
+  >[];
+  onTimeout?: RouteShorthandHook<
+    onTimeoutHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>,
+    onTimeoutAsyncHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>
+  >
+  | RouteShorthandHook<
+    onTimeoutHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>,
+    onTimeoutAsyncHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>
+  >[];
+  onError?: RouteShorthandHook<
+    onErrorHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, FastifyError, NoInfer<SchemaCompiler>, TypeProvider, Logger>,
+    onErrorAsyncHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, FastifyError, NoInfer<SchemaCompiler>, TypeProvider, Logger>
+  >
+  | RouteShorthandHook<
+    onErrorHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, FastifyError, NoInfer<SchemaCompiler>, TypeProvider, Logger>,
+    onErrorAsyncHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, FastifyError, NoInfer<SchemaCompiler>, TypeProvider, Logger>
+  >[];
+  onRequestAbort?: RouteShorthandHook<
+    onRequestAbortHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>,
+    onRequestAbortAsyncHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>
+  >
+  | RouteShorthandHook<
+    onRequestAbortHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>,
+    onRequestAbortAsyncHookHandler<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig, NoInfer<SchemaCompiler>, TypeProvider, Logger>
+  >[];
 }
 /**
  * Route handler method declaration.
