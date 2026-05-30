@@ -5,8 +5,14 @@ import fastify, {
   FastifyReply,
   FastifyInstance,
   FastifyError,
-  SafePromiseLike
+  SafePromiseLike,
+  FastifySchema,
+  ContextConfigDefault,
+  RawRequestDefaultExpression,
+  RawReplyDefaultExpression,
+  RawServerDefault
 } from '../../fastify'
+import { RequestPayload } from '../../types/hooks'
 import { expectAssignable, expectError, expectType } from 'tsd'
 import { IncomingHttpHeaders } from 'node:http'
 import { Type, TSchema, Static } from 'typebox'
@@ -337,6 +343,23 @@ expectAssignable(server.withTypeProvider<TypeBoxProvider>().get(
   }
 ))
 
+type TypeBoxRequest = FastifyRequest<
+  { Body: { x: number, y: string, z: boolean } },
+  RawServerDefault,
+  RawRequestDefaultExpression<RawServerDefault>,
+  FastifySchema,
+  TypeBoxProvider
+>
+type TypeBoxReply = FastifyReply<
+  { Body: { x: number, y: string, z: boolean } },
+  RawServerDefault,
+  RawRequestDefaultExpression<RawServerDefault>,
+  RawReplyDefaultExpression<RawServerDefault>,
+  ContextConfigDefault,
+  FastifySchema,
+  TypeBoxProvider
+>
+
 // Async handlers
 
 expectAssignable(server.withTypeProvider<TypeBoxProvider>().get(
@@ -349,47 +372,51 @@ expectAssignable(server.withTypeProvider<TypeBoxProvider>().get(
         z: Type.Boolean()
       })
     },
-    preHandler: async (req, reply, done) => {
+    preHandler: async (req: TypeBoxRequest, reply: TypeBoxReply) => {
       expectType<number>(req.body.x)
       expectType<string>(req.body.y)
       expectType<boolean>(req.body.z)
     },
-    preParsing: async (req, reply, payload, done) => {
+    preParsing: async (
+      req: TypeBoxRequest,
+      reply: TypeBoxReply,
+      payload: RequestPayload
+    ) => {
       expectType<number>(req.body.x)
       expectType<string>(req.body.y)
       expectType<boolean>(req.body.z)
     },
-    preSerialization: async (req, reply, payload, done) => {
+    preSerialization: async (req: TypeBoxRequest, reply: TypeBoxReply, payload: unknown) => {
       expectType<number>(req.body.x)
       expectType<string>(req.body.y)
       expectType<boolean>(req.body.z)
     },
-    preValidation: async (req, reply, done) => {
+    preValidation: async (req: TypeBoxRequest, reply: TypeBoxReply) => {
       expectType<number>(req.body.x)
       expectType<string>(req.body.y)
       expectType<boolean>(req.body.z)
     },
-    onError: async (req, reply, error, done) => {
+    onError: async (req: TypeBoxRequest, reply: TypeBoxReply, error: FastifyError) => {
       expectType<number>(req.body.x)
       expectType<string>(req.body.y)
       expectType<boolean>(req.body.z)
     },
-    onRequest: async (req, reply, done) => {
+    onRequest: async (req: TypeBoxRequest, reply: TypeBoxReply) => {
       expectType<number>(req.body.x)
       expectType<string>(req.body.y)
       expectType<boolean>(req.body.z)
     },
-    onResponse: async (req, reply, done) => {
+    onResponse: async (req: TypeBoxRequest, reply: TypeBoxReply) => {
       expectType<number>(req.body.x)
       expectType<string>(req.body.y)
       expectType<boolean>(req.body.z)
     },
-    onTimeout: async (req, reply, done) => {
+    onTimeout: async (req: TypeBoxRequest, reply: TypeBoxReply) => {
       expectType<number>(req.body.x)
       expectType<string>(req.body.y)
       expectType<boolean>(req.body.z)
     },
-    onSend: async (req, reply, payload, done) => {
+    onSend: async (req: TypeBoxRequest, reply: TypeBoxReply, payload: unknown) => {
       expectType<number>(req.body.x)
       expectType<string>(req.body.y)
       expectType<boolean>(req.body.z)
